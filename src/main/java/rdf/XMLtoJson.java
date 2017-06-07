@@ -1,7 +1,10 @@
 package rdf;
 
+import javafx.util.Pair;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.http.auth.AUTH;
+import org.apache.jena.base.Sys;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.util.FileManager;
 
@@ -13,15 +16,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public class XMLtoJson {
-    private static Model model;
     final static Integer minCoauthorNum = 0;
-    public static void main(String[] args) {
+
+    public static Pair<String, String> xml2json(Model model) {
         HashMap<String, Integer> authoridToIndex = new HashMap<String, Integer>();
         Integer index = 0;
         JSONArray authorsJson = JSONArray.fromObject("[]");
         JSONArray coauthorsJson = JSONArray.fromObject("[]");
 
-        model = FileManager.get().loadModel("./data/coauthor.xml");
         StmtIterator authorIter = model.listStatements(
                 new SimpleSelector(null, null, (RDFNode) null) {
                     public boolean selects(Statement s) {
@@ -102,17 +104,27 @@ public class XMLtoJson {
         }
 //        System.out.println(coauthorsJson);
 
-        try {
-            PrintStream jsonOut = new PrintStream(new File("./data/coauthor-tmp.json"));
-            jsonOut.print("var nodes = ");
-            jsonOut.print(authorsJson);
-            jsonOut.println(";");
-            jsonOut.println();
-            jsonOut.print("var edges = ");
-            jsonOut.print(coauthorsJson);
-            jsonOut.println(";");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            PrintStream jsonOut = new PrintStream(new File("./data/coauthor-tmp.json"));
+//            jsonOut.print("var nodes = ");
+//            jsonOut.print(authorsJson);
+//            jsonOut.println(";");
+//            jsonOut.println();
+//            jsonOut.print("var edges = ");
+//            jsonOut.print(coauthorsJson);
+//            jsonOut.println(";");
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+
+        return new Pair<String, String>(authorsJson.toString(), coauthorsJson.toString());
+    }
+
+
+    public static void main(String[] args) {
+        Model m = AuthorInfo.getAutorRelated("Andrey V. Savkin");
+        Pair<String, String> p = xml2json(m);
+        System.out.println(p.getKey());
+        System.out.println(p.getValue());
     }
 }
