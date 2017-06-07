@@ -1,5 +1,6 @@
 package rdf;
 
+import org.apache.jena.base.Sys;
 import org.apache.jena.query.*;
 
 public class AuthorInfo {

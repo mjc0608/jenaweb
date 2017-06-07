@@ -1,8 +1,9 @@
 package rdf;
 
 import org.apache.jena.rdf.model.*;
+import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.util.FileManager;
-import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,7 +14,7 @@ import java.util.*;
 public class DBLP {
     private static Model model, authorModel, authorListModel, paperModel;
 
-    private static Map<String, String> idToAuthor;
+    private static Map<String, String> uriToAuthor, uriToTitle;
 
     private static Property SWRC, BIBO;
 
@@ -73,16 +74,22 @@ public class DBLP {
     }
 
     public static void mapAuthorWithUri() {
-        idToAuthor = new HashMap<String, String>();
-        StmtIterator authorIter = authorModel.listStatements();
+        uriToAuthor = new HashMap<String, String>();
+        ResIterator authorIter = authorModel.listResourcesWithProperty(RDFS.label);
         while (authorIter.hasNext()) {
-            Statement stmt = authorIter.nextStatement();
-            String uri = stmt.getSubject().toString();
-            String flag = stmt.getPredicate().toString();
-            String name = stmt.getObject().toString();
-            if (flag.equals("http://xmlns.com/foaf/0.1/name")) {
-                idToAuthor.put(uri, name);
-            }
+            Resource resource = authorIter.nextResource();
+            Statement stmt = resource.getProperty(RDFS.label);
+            uriToAuthor.put(stmt.getSubject().toString(), stmt.getObject().toString());
+        }
+    }
+
+    public static void mapTitleWithUri() {
+        uriToTitle = new HashMap<String, String>();
+        ResIterator paperIter = paperModel.listResourcesWithProperty(RDFS.label);
+        while (paperIter.hasNext()) {
+            Resource resource = paperIter.nextResource();
+            Statement stmt = resource.getProperty(RDFS.label);
+            uriToTitle.put(stmt.getSubject().toString(), stmt.getObject().toString());
         }
     }
 
@@ -103,14 +110,36 @@ public class DBLP {
                 }
         );
 
+        Property paperUriProp = authorModel.createProperty("http://localhost/paperUri/", "uri");
+        Property paperTitleProp = authorModel.createProperty("http://localhost/paperTitle/", "title");
+
         while (paperIter.hasNext()) {
             Statement stmt = paperIter.nextStatement();
 //            System.out.println(stmt.getPredicate().toString());
             List<String> authors = new ArrayList<String>();
             String authorListUri = stmt.getObject().toString();
             if (authorListUri.matches("http://localhost/journals/automatica/\\w+/authorlist")) {
-                System.out.println();
+                String paperUri = stmt.getSubject().toString();
+                for (int i = 1; i < 10; i++) {
+                    Statement ordinal = authorListModel.getResource(authorListUri).getProperty(RDF.li(i));
+                    if (ordinal == null) {
+                        break;
+                    }
+//                    System.out.println(ordinal.getObject());
+                    Resource resource = authorModel.getResource(ordinal.getObject().toString());
+                    resource.addProperty(paperUriProp, paperUri + "; Title: " + uriToTitle.get(paperUri) + "; Rank: " + i);
+//                    Resource tmp = resource.getProperty(paperUriProp).getResource();
+//                    tmp.addProperty(paperTitleProp, uriToTitle.get(paperUri);
+                }
+//                System.out.println("======================================");
             }
+        }
+
+        try {
+            PrintStream rdfout = new PrintStream(new File("./data/author.xml"));
+            authorModel.write(rdfout);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
     }
 
@@ -186,11 +215,12 @@ public class DBLP {
     public static void main(String[] args) {
         getModels();
 
-        mapAuthorWithUri();
+//        mapAuthorWithUri();
+        mapTitleWithUri();
 
 //        getCoauthor();
 
-//        getAuthorPaper();
+        getAuthorPaper();
 
     }
 }
