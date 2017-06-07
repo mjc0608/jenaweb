@@ -14,7 +14,7 @@ import java.util.HashSet;
 
 public class XMLtoJson {
     private static Model model;
-    final static Integer minCoauthorNum = 2;
+    final static Integer minCoauthorNum = 0;
     public static void main(String[] args) {
         HashMap<String, Integer> authoridToIndex = new HashMap<String, Integer>();
         Integer index = 0;
@@ -103,7 +103,7 @@ public class XMLtoJson {
 //        System.out.println(coauthorsJson);
 
         try {
-            PrintStream jsonOut = new PrintStream(new File("./data/coauthor.json"));
+            PrintStream jsonOut = new PrintStream(new File("./data/coauthor-tmp.json"));
             jsonOut.print("var nodes = ");
             jsonOut.print(authorsJson);
             jsonOut.println(";");
