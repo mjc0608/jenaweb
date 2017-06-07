@@ -149,7 +149,8 @@ public class DBLP {
         StmtIterator authorListIter = model.listStatements(
                 new SimpleSelector(null, null, (RDFNode) null) {
                     public boolean selects(Statement stmt) {
-                        return isAuthorList(stmt);
+                        Property predicate = s.getPredicate();
+                        return (predicate != null && predicate.toString().contains("_1"));
                     }
                 }
         );
